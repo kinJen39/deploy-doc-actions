@@ -1,0 +1,84 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation..
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning..
+
+name: Java CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Build with Gradle
+        run: gradle build CodenarcMain groovydoc --info
+      
+      - name: Upload Groovydoc
+        uses: actions/upload-artifact@v2
+        with:
+          name: Groovy Documentation
+          path: build/docs/groovydoc
+          
+      - name: Upload Codenarc Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: Codenarc Report 
+          path: build/reports/codenarc
+      
+      #- name: Deploy documentation
+      #  uses: peaceiris/actions-gh-pages@v3
+      #  with:
+      # github_token: ${{ secrets.GITHUB_TOKEN }}
+      #    publish_dir: build/docs/groovydoc
+
+      - name: Copy groovydoc files
+        run: |
+          mkdir docs
+          cp -r build/docs/groovydoc/* docs/
+
+      #- name: Configure Git
+      #  run: |
+      #    git config --local user.email "action@github.com"
+      #    git config --local user.name "GitHub Action"
+          
+      #- name: Create and switch to gh-pages
+      #  run: |
+      #    git fetch origin
+      #    git checkout gh-pages 
+          
+      #- name: Commit and push changes
+      #  run: |
+      #    git add docs
+      #    git commit -m "Update documentation"
+      #    git push origin gh-pages
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          # Upload entire repository
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
